@@ -1,23 +1,29 @@
 use std::thread;
 use std::sync::mpsc;
+use std::time::Duration;
 
 fn main() {
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
-        let val = String::from("Ground control to Major Tom...");
-        println!("Sending: {}", &val);
-        
-        // send takes ownership of val
-        let sender = tx.send(val);
-        match sender {
-            Ok(val) => val,
-            Err(e) => panic!("Could not send msg: {:?}", e)
-        };
+        let vals = vec![
+            String::from("hi"),
+            String::from("from"),
+            String::from("the"),
+            String::from("thread"),
+        ];
+
+        for val in vals {
+            let outbound = tx.send(val);
+            match outbound {
+                Ok(val) => val,
+                Err(e) => panic!("Could not send msg: {:?}", e),
+            };
+            thread::sleep(Duration::from_secs(1));
+        }
     });
 
-    // received now has ownership of the value sent
-    let received = rx.recv().unwrap();
-
-    println!("Received: {}", received);
+    for received in rx {
+        println!("Got: {}", received);
+    }
 }
