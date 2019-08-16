@@ -1,17 +1,23 @@
 use std::thread;
-use std::time::Duration;
+use std::sync::mpsc;
 
 fn main() {
-    let v = vec![1, 2, 3];
+    let (tx, rx) = mpsc::channel();
 
-    let handle = thread::spawn(move || {
-        println!("Here's a vector: {:?}", v);
+    thread::spawn(move || {
+        let val = String::from("Ground control to Major Tom...");
+        println!("Sending: {}", &val);
+        
+        // send takes ownership of val
+        let sender = tx.send(val);
+        match sender {
+            Ok(val) => val,
+            Err(e) => panic!("Could not send msg: {:?}", e)
+        };
     });
-    
-    for i in 1..5 {
-        println!("hi number {} from the main thread!", i);
-        thread::sleep(Duration::from_millis(1));
-    }
 
-    handle.join().unwrap();
+    // received now has ownership of the value sent
+    let received = rx.recv().unwrap();
+
+    println!("Received: {}", received);
 }
